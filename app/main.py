@@ -1,14 +1,9 @@
 from fastapi import FastAPI
-from sqlmodel import create_engine, SQLModel
+from sqlmodel import SQLModel
 from app.db.models.user_model import User
 from contextlib import asynccontextmanager
-
-data_base_URL = "sqlite:///./gym.db"
-engine = create_engine(data_base_URL, connect_args= {"check_same_thread": False})
-
-def create_db_and_tables():
-    print("Running create_db_and_tables")
-    SQLModel.metadata.create_all(engine)
+from app.db.sqlite import create_db_and_tables
+from app.routers import auth_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -22,6 +17,8 @@ app = FastAPI(
     title="Gym Tracker API",
     lifespan = lifespan    
 )
+
+app.include_router(auth_router.router)
 
 @app.get('/')
 def home() -> dict :
