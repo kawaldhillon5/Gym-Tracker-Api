@@ -1,62 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from app.schemas.user_schema import UserCreate, UserLogin, UserRead, Token, TokenData
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import OAuth2PasswordRequestForm
+from app.schemas.user_schema import UserCreate,  UserRead, Token
 from app.db.sqlite import get_session
 from sqlmodel import Session, select
 from sqlalchemy.exc import IntegrityError
 from app.db.models.user_model import User
 from pwdlib import PasswordHash
-from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
+from datetime import timedelta
+from app.security import create_access_token, get_current_user, ACCESS_TOKEN_EXPIRE_MINUTES
 
 password_hash = PasswordHash.recommended()
-SECRET_KEY = "my_secret_key" 
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
 
 router = APIRouter(prefix='/user')
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-async def get_current_user(
-    token: str = Depends(oauth2_scheme), 
-    session: Session = Depends(get_session)
-):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-        username = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-
-        token_data = TokenData(user_name=username)
-
-    except JWTError:
-        raise credentials_exception
-
-    user = session.exec(select(User).where(User.user_name == token_data.user_name)).first()
-
-    if user is None:
-        raise credentials_exception
-
-    return user
 
 def get_password_hash(password: str) -> str:
     return password_hash.hash(password)
@@ -65,7 +22,7 @@ def verify_password(plain_pass: str, hased_pass: str) -> bool:
     return password_hash.verify(plain_pass, hased_pass)
 
 @router.post('/', response_model= UserRead )
-def create_user(user: UserCreate, session: Session = Depends(get_session)):
+def create_user( user: UserCreate, session: Session = Depends(get_session)):
     new_user = User(user_name=user.user_name, email=user.email, hashed_password=get_password_hash(user.password))
     try :
         session.add(new_user)
