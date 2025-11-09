@@ -6,11 +6,19 @@ from sqlmodel import Session, select
 from app.db.sqlite import get_session
 from datetime import date
 
-router = APIRouter(prefix='/checkin')
+router = APIRouter(prefix='/checkins')
 
 @router.post('/', response_model=CheckIn)
 def create_check_in(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     today = date.today()
+
+    #checking for existing checked in entry for current day
+    query = select(CheckIn).where(CheckIn.user_id == current_user.id, CheckIn.check_in_date == today)
+    existing_check_in = session.exec(query).first()
+
+    if existing_check_in:
+        raise HTTPException(status_code=409, detail="User has already checked in today.")
+    
     check_in = CheckIn(check_in_date=today, user_id=current_user.id) # type: ignore
     try :
         session.add(check_in)
