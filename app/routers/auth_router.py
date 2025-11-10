@@ -11,7 +11,7 @@ from app.security import create_access_token, get_current_user, ACCESS_TOKEN_EXP
 
 password_hash = PasswordHash.recommended()
 
-router = APIRouter(prefix='/user')
+router = APIRouter(prefix='/user', tags=['Auth'])
 
 
 

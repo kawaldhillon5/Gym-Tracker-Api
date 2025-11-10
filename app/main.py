@@ -7,7 +7,7 @@ from app.db.models.exercise_log_model import ExerciseLog
 from app.db.models.set_log_model import SetLog  
 from contextlib import asynccontextmanager
 from app.db.sqlite import create_db_and_tables
-from app.routers import auth_router, check_in_router
+from app.routers import auth_router, check_in_router, workout_router
 from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
@@ -40,6 +40,7 @@ app.add_middleware(
 
 app.include_router(auth_router.router)
 app.include_router(check_in_router.router)
+app.include_router(workout_router.router)
 
 
 @app.get('/')

@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel
-from exercise_log_schema import ExerciseLogRead 
+from app.schemas.exercise_log_schema import ExerciseLogRead 
 
 class WorkoutBase(SQLModel):
     name: str | None = "My Workout"

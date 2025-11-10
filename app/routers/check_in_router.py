@@ -6,7 +6,7 @@ from sqlmodel import Session, select
 from app.db.sqlite import get_session
 from datetime import date
 
-router = APIRouter(prefix='/checkins')
+router = APIRouter(prefix='/checkins', tags=["checkins"])
 
 @router.post('/', response_model=CheckIn)
 def create_check_in(current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):

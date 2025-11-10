@@ -1,0 +1,91 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
+
+from ..db.sqlite import get_session
+from ..db.models.user_model import User
+from ..db.models.check_in_model import CheckIn
+from ..db.models.workout_model import Workout
+from ..db.models.exercise_log_model import ExerciseLog
+from ..db.models.set_log_model import SetLog 
+
+from ..schemas.workout_schema import (WorkoutCreate, WorkoutRead)
+from ..schemas.exercise_log_schema import (ExerciseLogCreate, ExerciseLogRead)
+from .. schemas.set_log_schema import (SetLogCreate, SetLogRead)
+
+from ..security import get_current_user
+
+router = APIRouter(prefix="/workouts", tags=["Workouts"])
+
+@router.post('/', response_model=WorkoutRead)
+def create_workout(workout_data: WorkoutCreate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    check_in = session.get(CheckIn, workout_data.check_in_id)
+
+    if not check_in : 
+        raise HTTPException(status_code=404, detail="Check In Not Found")
+    
+    assert current_user.id is not None
+    if check_in.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this check-in.")
+    
+    if check_in.workout:
+         raise HTTPException(status_code=409, detail="A workout already exists for this check-in.")
+    
+    new_workout = Workout.model_validate(workout_data)
+
+    session.add(new_workout)
+    session.commit()
+    session.refresh(new_workout)
+
+    return new_workout
+
+@router.post("/exercise-logs/", response_model=ExerciseLogRead)
+def create_exercise_log(exercise_data: ExerciseLogCreate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    workout = session.get(Workout, exercise_data.workout_id)
+
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+
+    assert workout.check_in.user_id is not None 
+    if workout.check_in.user_id != current_user.id:
+         raise HTTPException(status_code=403, detail="Not authorized to access this workout.")
+
+    new_exercise_log = ExerciseLog.model_validate(exercise_data)
+
+    session.add(new_exercise_log)
+    session.commit()
+    session.refresh(new_exercise_log)
+
+    return new_exercise_log
+
+@router.post("/set-logs/", response_model=SetLogRead)
+def create_set_log(set_data: SetLogCreate,current_user: User = Depends(get_current_user),session: Session = Depends(get_session)):
+
+    exercise_log = session.get(ExerciseLog, set_data.exercise_log_id)
+
+    if not exercise_log:
+        raise HTTPException(status_code=404, detail="Exercise log not found.")
+
+    assert exercise_log.workout.check_in.user_id is not None
+    if exercise_log.workout.check_in.user_id != current_user.id:
+         raise HTTPException(status_code=403, detail="Not authorized to access this exercise log.")
+
+    new_set_log = SetLog.model_validate(set_data)
+
+    session.add(new_set_log)
+    session.commit()
+    session.refresh(new_set_log)
+
+    return new_set_log
+
+@router.get("/{workout_id}", response_model=WorkoutRead)
+def get_single_workout(workout_id: int,current_user: User = Depends(get_current_user),session: Session = Depends(get_session)):
+    workout = session.get(Workout, workout_id)
+
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+
+    assert workout.check_in.user_id is not None
+    if workout.check_in.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this workout.")
+
+    return workout

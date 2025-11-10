@@ -11,6 +11,7 @@ class CheckIn(SQLModel, table = True):
     id : Optional[int] =  Field(default = None, primary_key=True)
     check_in_date: date = Field(index=True)
     user_id : int = Field(foreign_key="user.id")
+    user: "User" = Relationship(back_populates="check_ins")
     workout: Optional["Workout"] = Relationship(
         back_populates="check_in", 
         sa_relationship_kwargs={"uselist": False}
