@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from sqlmodel import SQLModel
 from app.db.models.user_model import User
-from .db.models.check_in import CheckIn  
+from app.db.models.check_in_model import CheckIn
+from app.db.models.workout_model import Workout
+from app.db.models.exercise_log_model import ExerciseLog
+from app.db.models.set_log_model import SetLog  
 from contextlib import asynccontextmanager
 from app.db.sqlite import create_db_and_tables
 from app.routers import auth_router, check_in_router

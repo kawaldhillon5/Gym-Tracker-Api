@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.db.models.check_in import CheckIn
+from app.db.models.check_in_model import CheckIn
 from app.db.models.user_model import User
 from app.security import get_current_user
 from sqlmodel import Session, select
