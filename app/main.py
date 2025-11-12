@@ -10,6 +10,15 @@ from app.db.sqlite import create_db_and_tables
 from app.routers import auth_router, check_in_router, workout_router
 from fastapi.middleware.cors import CORSMiddleware
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+ORIGIN  = os.getenv("ORIGIN")
+
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
@@ -24,13 +33,12 @@ app = FastAPI(
 )
 
 origins = [
-    "http://127.0.0.1:5173",
-    "http://localhost:5173",
+   ORIGIN
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, 
+    allow_origins=origins, # type: ignore 
     allow_credentials=True, 
     allow_methods=["*"],    
     allow_headers=["*"],    

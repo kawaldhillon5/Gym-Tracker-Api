@@ -6,9 +6,15 @@ from sqlmodel import Session, select
 from app.db.models.user_model import User
 from app.db.sqlite import get_session
 from app.schemas.user_schema import TokenData
+import os
+from dotenv import load_dotenv
 
-SECRET_KEY = "my_secret_key" 
-ALGORITHM = "HS256"
+load_dotenv()
+
+
+
+SECRET_KEY = os.getenv("SECRET_KEY") 
+ALGORITHM = os.getenv("ALGORITHM") 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/user/login")
@@ -22,7 +28,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
 
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM) #type: ignore
     return encoded_jwt
 
 
@@ -34,7 +40,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]) #type: ignore
 
         username = payload.get("sub")
         if username is None:
