@@ -9,4 +9,5 @@ class WorkoutCreate(WorkoutBase):
 
 class WorkoutRead(WorkoutBase):
     id: int
+    check_in_id: int
     exercise_logs: list[ExerciseLogRead] = []

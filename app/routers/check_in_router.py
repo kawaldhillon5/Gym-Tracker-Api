@@ -17,7 +17,7 @@ def create_check_in(current_user: User = Depends(get_current_user), session: Ses
     existing_check_in = session.exec(query).first()
 
     if existing_check_in:
-        raise HTTPException(status_code=409, detail="User has already checked in today.")
+        raise HTTPException(status_code=409, detail="Already checked in today.")
     
     check_in = CheckIn(check_in_date=today, user_id=current_user.id) # type: ignore
     try :
