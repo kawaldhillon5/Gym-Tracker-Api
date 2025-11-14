@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
+from datetime import date
 
 from ..db.sqlite import get_session
 from ..db.models.user_model import User
@@ -19,7 +20,6 @@ router = APIRouter(prefix="/workouts", tags=["Workouts"])
 @router.post('/', response_model=WorkoutRead)
 def create_workout(workout_data: WorkoutCreate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     check_in = session.get(CheckIn, workout_data.check_in_id)
-
     if not check_in : 
         raise HTTPException(status_code=404, detail="Check In Not Found")
     
@@ -37,6 +37,27 @@ def create_workout(workout_data: WorkoutCreate, current_user: User = Depends(get
     session.refresh(new_workout)
 
     return new_workout
+
+@router.get('/checkin-info/{dateStr}', response_model=WorkoutRead)
+def checkin_info(dateStr: str, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+
+    query = select(CheckIn).where(CheckIn.check_in_date == dateStr)
+    check_in = session.exec(query).first()
+
+    if not check_in : 
+        raise HTTPException(status_code=404, detail="Check In Not Found")
+    
+    assert current_user.id is not None
+    if check_in.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this Info.")
+    
+    if not check_in.workout:
+        raise HTTPException(status_code=404, detail="No Workout Data found")
+
+    workout = check_in.workout
+    return workout
+
+
 
 @router.post("/exercise-logs/", response_model=ExerciseLogRead)
 def create_exercise_log(exercise_data: ExerciseLogCreate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
