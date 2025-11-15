@@ -41,11 +41,11 @@ def create_workout(workout_data: WorkoutCreate, current_user: User = Depends(get
 @router.get('/checkin-info/{dateStr}', response_model=WorkoutRead)
 def checkin_info(dateStr: str, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
 
-    query = select(CheckIn).where(CheckIn.check_in_date == dateStr)
+    query = select(CheckIn).where(CheckIn.user_id == current_user.id, CheckIn.check_in_date == dateStr)
     check_in = session.exec(query).first()
 
     if not check_in : 
-        raise HTTPException(status_code=404, detail="Check In Not Found")
+        raise HTTPException(status_code=404, detail="Check In info not Found")
     
     assert current_user.id is not None
     if check_in.user_id != current_user.id:
