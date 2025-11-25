@@ -5,6 +5,7 @@ class UserCreate(BaseModel):
     user_name: str
     email: str
     password: str = Field(max_length=72)
+    confirmPassword:str = Field(max_length=72)
 
 class UserRead( BaseModel):
     id: int
