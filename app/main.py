@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 ORIGIN  = os.getenv("ORIGIN")
-
+ORIGIN2 = os.getenv("ORIGIN2")
 
 
 @asynccontextmanager
@@ -33,7 +33,7 @@ app = FastAPI(
 )
 
 origins = [
-   ORIGIN
+   ORIGIN, ORIGIN2
 ]
 
 app.add_middleware(
