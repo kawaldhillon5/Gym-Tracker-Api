@@ -110,3 +110,48 @@ def get_single_workout(workout_id: int,current_user: User = Depends(get_current_
         raise HTTPException(status_code=403, detail="Not authorized to access this workout.")
 
     return workout
+
+@router.delete("/exercise-logs/{exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_exercise_log(exercise_id: int, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    exercise_log = session.get(ExerciseLog, exercise_id)
+    
+    if not exercise_log:
+        raise HTTPException(status_code=404, detail="Exercise log not found.")
+
+    
+    try:
+        owner_id = exercise_log.workout.check_in.user_id
+    except AttributeError:
+        raise HTTPException(status_code=404, detail="Related workout data not found.")
+
+    if owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this exercise.")
+
+    
+    for set_log in exercise_log.set_logs:
+        session.delete(set_log)
+
+    session.delete(exercise_log)
+    session.commit()
+    
+    return None
+
+@router.delete("/set-logs/{set_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_set_log( set_id: int, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    set_log = session.get(SetLog, set_id)
+    
+    if not set_log:
+        raise HTTPException(status_code=404, detail="Set log not found.")
+
+    try:
+        owner_id = set_log.exercise_log.workout.check_in.user_id
+    except AttributeError:
+        raise HTTPException(status_code=404, detail="Related exercise data not found.")
+        
+    if owner_id != current_user.id:
+         raise HTTPException(status_code=403, detail="Not authorized to delete this set.")
+
+    session.delete(set_log)
+    session.commit()
+    
+    return None
