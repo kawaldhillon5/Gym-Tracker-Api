@@ -11,7 +11,7 @@ from ..db.models.set_log_model import SetLog
 
 from ..schemas.workout_schema import (WorkoutCreate, WorkoutRead)
 from ..schemas.exercise_log_schema import (ExerciseLogCreate, ExerciseLogRead)
-from .. schemas.set_log_schema import (SetLogCreate, SetLogRead)
+from .. schemas.set_log_schema import (SetLogCreate, SetLogRead, SetLogUpdate)
 
 from ..security import get_current_user
 
@@ -146,7 +146,7 @@ def delete_set_log( set_id: int, current_user: User = Depends(get_current_user),
     try:
         owner_id = set_log.exercise_log.workout.check_in.user_id
     except AttributeError:
-        raise HTTPException(status_code=404, detail="Related exercise data not found.")
+        raise HTTPException(status_code=404, detail="Related set data not found.")
         
     if owner_id != current_user.id:
          raise HTTPException(status_code=403, detail="Not authorized to delete this set.")
@@ -155,3 +155,28 @@ def delete_set_log( set_id: int, current_user: User = Depends(get_current_user),
     session.commit()
     
     return None
+
+@router.patch('/set-logs/{set_id}', response_model=SetLogRead)
+def update_set_log(set_id:int, set_update:SetLogUpdate, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
+    set_log = session.get(SetLog, set_id)
+    if not set_log:
+        raise HTTPException(status_code=404, detail="Set Log Not Found")
+    
+    try:
+        owner_id = set_log.exercise_log.workout.check_in.user_id
+    except AttributeError:
+        raise HTTPException(status_code=404, detail="Related set data not found.")
+        
+    if owner_id != current_user.id:
+         raise HTTPException(status_code=403, detail="Not authorized to delete this set.")
+    
+    update_data = set_update.model_dump(exclude_unset=True)
+    
+    for key, value in update_data.items():
+        setattr(set_log, key, value)
+
+    session.add(set_log)
+    session.commit()
+    session.refresh(set_log)
+
+    return set_log

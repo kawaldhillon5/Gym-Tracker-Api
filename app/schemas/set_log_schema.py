@@ -12,3 +12,8 @@ class SetLogCreate(SetLogBase):
 
 class SetLogRead(SetLogBase):
     id: int
+
+class SetLogUpdate(SQLModel):
+    reps: Optional[int] = None
+    weight_kg: Optional[float] = None
+    comment: Optional[str] = None
