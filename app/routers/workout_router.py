@@ -111,6 +111,23 @@ def get_single_workout(workout_id: int,current_user: User = Depends(get_current_
 
     return workout
 
+@router.get("/date/{check_in_date}", response_model=WorkoutRead)
+def get_workout_from_date(check_in_date: str,current_user: User = Depends(get_current_user),session: Session = Depends(get_session)):
+
+    query = (
+        select(Workout)
+        .join(CheckIn) 
+        .where(CheckIn.check_in_date == check_in_date)
+        .where(CheckIn.user_id == current_user.id)
+    )
+    workout = session.exec(query).first()
+
+    if not workout:
+        raise HTTPException(status_code=404, detail="Workout not found.")
+    
+    return workout
+
+
 @router.delete("/exercise-logs/{exercise_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_exercise_log(exercise_id: int, current_user: User = Depends(get_current_user), session: Session = Depends(get_session)):
     exercise_log = session.get(ExerciseLog, exercise_id)
@@ -171,7 +188,7 @@ def update_set_log(set_id:int, set_update:SetLogUpdate, current_user: User = Dep
          raise HTTPException(status_code=403, detail="Not authorized to delete this set.")
     
     update_data = set_update.model_dump(exclude_unset=True)
-    
+
     for key, value in update_data.items():
         setattr(set_log, key, value)
 
